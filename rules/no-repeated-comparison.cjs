@@ -1,7 +1,16 @@
 'use strict';
 
 /** The comparisons a function shouldn't write twice. */
-const OPERATORS = new Set(['===', '!==', '==', '!=', '<', '>', '<=', '>=']);
+const OPERATORS = new Set([
+  '===',
+  '!==',
+  '==',
+  '!=',
+  '<',
+  '>',
+  '<=',
+  '>=',
+]);
 
 /** The names a comparison reads — the roots of its identifiers and member chains (`value.page` → `value`). */
 function roots(node, out) {
@@ -93,17 +102,30 @@ module.exports = {
     const stack = [];
 
     function enter() {
-      stack.push({ seen: new Map(), repeats: [], changed: new Set() });
+      stack.push({
+        seen: new Map(),
+        repeats: [],
+        changed: new Set(),
+      });
     }
 
     function leave() {
       const scope = stack.pop();
-      for (const [node, first] of scope.repeats) {
+      for (const [
+        node,
+        first,
+      ] of scope.repeats) {
         const names = roots(node, new Set());
         if ([...names].some((name) => scope.changed.has(name))) {
           continue;
         }
-        context.report({ node, messageId: 'repeated', data: { text: sourceCode.getText(first) } });
+        context.report({
+          node,
+          messageId: 'repeated',
+          data: {
+            text: sourceCode.getText(first),
+          },
+        });
       }
     }
 
@@ -131,7 +153,10 @@ module.exports = {
         const text = sourceCode.getText(node).replace(/\s+/g, ' ');
         const first = scope.seen.get(text);
         if (first) {
-          scope.repeats.push([node, first]);
+          scope.repeats.push([
+            node,
+            first,
+          ]);
         } else {
           scope.seen.set(text, node);
         }

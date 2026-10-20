@@ -1,26 +1,46 @@
 'use strict';
 
-/** Methods that change an array's length — a loop that calls them on its array re-reads `.length` on purpose. */
-const MUTATORS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'length']);
+/**
+ * The bounds checked — an array's `length`, a Map's / Set's `size` — and what changes each: a loop that does it to its
+ * collection re-reads the bound on purpose.
+ */
+const BOUNDS = {
+  length: [
+    'push',
+    'pop',
+    'shift',
+    'unshift',
+    'splice',
+    'length',
+  ],
+  size: [
+    'add',
+    'set',
+    'delete',
+    'clear',
+  ],
+};
 
 /** The source of `node`'s object (`list` for `list.length`, `this.items` for `this.items.length`). */
 function objectText(sourceCode, member) {
   return sourceCode.getText(member.object);
 }
 
-/** Whether `body` changes `name`: calls a length-changing method on it, assigns it or its `length`. */
-function changes(sourceCode, body, name) {
+/** Whether `body` changes `name`: calls a method changing its `bound` on it, assigns it or its `length`. */
+function changes(
+  sourceCode, body, name, bound,
+) {
   const text = sourceCode.getText(body);
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const mutated = new RegExp(`(^|[^\\w$.])${escaped}\\s*\\.\\s*(${[...MUTATORS].join('|')})\\b`);
+  const mutated = new RegExp(`(^|[^\\w$.])${escaped}\\s*\\.\\s*(${BOUNDS[bound].join('|')})\\b`);
   const assigned = new RegExp(`(^|[^\\w$.])${escaped}\\s*=[^=]`);
   return mutated.test(text) || assigned.test(text);
 }
 
 /**
- * coding.md §6.2 / §6.3 (LAB D-013): a loop's bound is read once, before the loop — `.length` in a `for` / `while` /
- * `do…while` condition is re-read on every iteration. Allowed when the loop changes that array (a queue drained with
- * `shift`, a list filled with `push`).
+ * coding.md §6.2 / §6.3 (LAB D-013): a loop's bound is read once, before the loop — `.length` / `.size` in a `for` /
+ * `while` / `do…while` condition is re-read on every iteration. Allowed when the loop changes that collection (a queue
+ * drained with `shift`, a list filled with `push`, a set emptied with `delete`).
  *
  * @example
  * // ❌ for (let i = 0; i < list.length; i++) { … }
@@ -30,11 +50,11 @@ module.exports = {
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Cache the loop bound before the loop instead of reading `.length` in the condition',
+      description: 'Cache the loop bound before the loop instead of reading `.length` / `.size` in the condition',
     },
     schema: [],
     messages: {
-      cache: '`{{name}}.length` is read on every iteration — read it once before the loop (coding.md §6.2/§6.3).',
+      cache: '`{{name}}.{{bound}}` is read on every iteration — read it once before the loop (coding.md §6.2/§6.3).',
     },
   },
   create(context) {
@@ -49,7 +69,7 @@ module.exports = {
         if (!node || typeof node.type !== 'string') {
           return;
         }
-        if (node.type === 'MemberExpression' && !node.computed && node.property.name === 'length') {
+        if (node.type === 'MemberExpression' && !node.computed && Object.hasOwn(BOUNDS, node.property.name)) {
           found.push(node);
         }
         for (const key of Object.keys(node)) {
@@ -66,8 +86,20 @@ module.exports = {
       })(loop.test);
       for (const member of found) {
         const name = objectText(sourceCode, member);
-        if (!changes(sourceCode, loop.body, name) && !(loop.update && changes(sourceCode, loop.update, name))) {
-          context.report({ node: member, messageId: 'cache', data: { name } });
+        const bound = member.property.name;
+        if (!changes(
+          sourceCode, loop.body, name, bound,
+        ) && !(loop.update && changes(
+          sourceCode, loop.update, name, bound,
+        ))) {
+          context.report({
+            node: member,
+            messageId: 'cache',
+            data: {
+              name,
+              bound,
+            },
+          });
         }
       }
     }

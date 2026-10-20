@@ -1,27 +1,59 @@
 'use strict';
-const { execFileSync } = require('child_process');
+const {
+  execFileSync,
+} = require('child_process');
 const path = require('path');
 
 /** Lints `code` with the lab config in a separate Node process (see `lint.cjs`). */
-function lint(code, options) {
-  const args = [path.join(__dirname, 'lint.cjs'), code ?? ''];
-  if (options) {
-    args.push(JSON.stringify(options));
+function lint(
+  code, options, filename,
+) {
+  const args = [
+    path.join(__dirname, 'lint.cjs'),
+    code ?? '',
+    options ? JSON.stringify(options) : '',
+  ];
+  if (filename) {
+    args.push(filename);
   }
-  return JSON.parse(execFileSync(process.execPath, args, { encoding: 'utf8' }));
+  return JSON.parse(execFileSync(
+    process.execPath, args, {
+      encoding: 'utf8',
+    },
+  ));
 }
 
-const TS = { files: ['**/*.ts'] };
+const TS = {
+  files: ['**/*.ts'],
+};
 
 describe('eslint-config-lab', () => {
-  it('one flat config entry: the parser, the plugins and the rules; files and globals as given', () => {
-    const result = lint(undefined, { files: ['src/**/*.ts'], globals: { window: 'readonly' } });
+  it('one entry with the parser, the plugins and the rules; files and globals as given', () => {
+    const result = lint(undefined, {
+      files: ['src/**/*.ts'],
+      globals: {
+        window: 'readonly',
+      },
+    });
     expect(result.files).toEqual(['src/**/*.ts']);
-    expect(result.globals).toEqual({ window: 'readonly' });
-    expect(result.plugins).toEqual(['@stylistic', '@typescript-eslint', 'lab']);
+    expect(result.globals).toEqual({
+      window: 'readonly',
+    });
+    expect(result.plugins).toEqual([
+      '@stylistic',
+      '@typescript-eslint',
+      'lab',
+    ]);
     expect(result.labRule).toBe('error');
-    expect(result.pluginRules).toEqual(['no-length-in-loop-condition', 'no-repeated-comparison']);
+    expect(result.pluginRules).toEqual([
+      'declare-before-loop',
+      'no-length-in-loop-condition',
+      'no-repeated-comparison',
+      'specifier-newline',
+    ]);
     expect(result.sameRules).toBe(true);
+    // the main entry + the tool configs' exemption + CommonJS
+    expect(result.entries).toBe(3);
   });
 
   it('defaults: TS / JS sources, no globals', () => {
@@ -41,5 +73,123 @@ describe('eslint-config-lab', () => {
   it('a direct timer is refused (subscriptions.md §6); the lab rules run', () => {
     expect(lint('setTimeout(run, 10);\n', TS).ruleIds).toContain('no-restricted-syntax');
     expect(lint('for (let i = 0; i < list.length; i++) {\n  use(i);\n}\n', TS).ruleIds).toContain('lab/no-length-in-loop-condition');
+  });
+
+  it('import names one per line; one statement per line (coding.md §6.7)', () => {
+    expect(lint('import {\n  a, b,\n} from \'./x\';\nuse(a, b);\n', TS).ruleIds).toContain('lab/specifier-newline');
+    expect(lint('use(1); use(2);\n', TS).ruleIds).toContain('@stylistic/max-statements-per-line');
+  });
+
+  it('named exports only; a tool config may export a default (coding.md §6.7)', () => {
+    const code = 'const config = {\n  a: 1,\n};\nexport default config;\n';
+    expect(lint(
+      code, TS, 'src/page.ts',
+    ).ruleIds).toContain('no-restricted-exports');
+    expect(lint(
+      code, TS, 'vite.config.ts',
+    ).ruleIds).toEqual([]);
+    expect(lint(
+      code, undefined, 'eslint.config.mjs',
+    ).ruleIds).toEqual([]);
+  });
+
+  it('react: true — the hook rules, as errors', () => {
+    const result = lint('function useX(on) {\n  if (on) {\n    useState(0);\n  }\n}\nuse(useX);\n', {
+      files: ['**/*.ts'],
+      react: true,
+    });
+    expect(result.plugins).toContain('react-hooks');
+    expect(result.reactRule).toBe('error');
+    expect(result.ruleIds).toContain('react-hooks/rules-of-hooks');
+    expect(lint(undefined, TS).plugins).not.toContain('react-hooks');
+  });
+
+  it('hotPaths — a loop\'s variables declared before the loop, only there (coding.md §6.2)', () => {
+    const code = 'for (const item of list) {\n  const x = item;\n  use(x);\n}\n';
+    const options = {
+      files: ['**/*.ts'],
+      hotPaths: ['src/parser/**'],
+    };
+    expect(lint(
+      code, options, 'src/parser/scan.ts',
+    ).ruleIds).toContain('lab/declare-before-loop');
+    expect(lint(
+      code, options, 'src/app/page.ts',
+    ).ruleIds).toEqual([]);
+    expect(lint(undefined, options).entries).toBe(4);
+  });
+
+  it('CommonJS may require; an ES module may not', () => {
+    const code = 'const x = require(\'x\');\nuse(x);\n';
+    const options = {
+      files: ['**/*.{ts,cjs}'],
+    };
+    expect(lint(
+      code, options, 'tool.cjs',
+    ).ruleIds).toEqual([]);
+    expect(lint(
+      code, options, 'page.ts',
+    ).ruleIds).toContain('@typescript-eslint/no-require-imports');
+  });
+
+  it.each([
+    [
+      {
+        hotpath: ['x'],
+      },
+      'eslint-config-lab: unknown option "hotpath" — did you mean "hotPaths"? Valid options: files, globals, hotPaths, react',
+    ],
+    [
+      {
+        file: ['x'],
+      },
+      'eslint-config-lab: unknown option "file" — did you mean "files"? Valid options: files, globals, hotPaths, react',
+    ],
+    [
+      {
+        files: 'src/**',
+      },
+      'eslint-config-lab: "files" expects an array of glob strings, got string "src/**"',
+    ],
+    [
+      {
+        files: [],
+      },
+      'eslint-config-lab: "files" expects an array of glob strings, got an array',
+    ],
+    [
+      {
+        hotPaths: [1],
+      },
+      'eslint-config-lab: "hotPaths" expects an array of glob strings, got an array',
+    ],
+    [
+      {
+        globals: null,
+      },
+      'eslint-config-lab: "globals" expects an object of globals (e.g. from the `globals` package), got null',
+    ],
+    [
+      {
+        globals: ['window'],
+      },
+      'eslint-config-lab: "globals" expects an object of globals (e.g. from the `globals` package), got an array',
+    ],
+    [
+      {
+        react: 'yes',
+      },
+      'eslint-config-lab: "react" expects a boolean, got string "yes"',
+    ],
+    [
+      ['src'],
+      'eslint-config-lab: expects an options object, got an array',
+    ],
+  ])('options are checked: %j', (options, message) => {
+    expect(lint(undefined, options).error).toBe(message);
+  });
+
+  it('a non-object options value is refused', () => {
+    expect(lint(undefined, 5).error).toBe('eslint-config-lab: expects an options object, got number 5');
   });
 });

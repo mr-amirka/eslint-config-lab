@@ -91,6 +91,9 @@ describe('eslint-config-lab', () => {
     expect(lint(
       code, undefined, 'eslint.config.mjs',
     ).ruleIds).toEqual([]);
+    expect(lint(
+      code, TS, 'src/theme.mn.ts',
+    ).ruleIds).toEqual([]);
   });
 
   it('react: true — the hook rules, as errors', () => {

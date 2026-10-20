@@ -8,7 +8,8 @@ copying rules.
 
 ## Install
 
-From GitHub, at a fixed commit (LAB D-014) — the same inside the lab and in a project's CI:
+From GitHub, at a fixed commit (LAB D-014) — the same inside the lab and in a project's CI. Needs ESLint 10 (the
+lab's one version: an older ESLint doesn't know some recommended rules, and an unknown rule fails the whole config).
 
 ```json
 "devDependencies": {

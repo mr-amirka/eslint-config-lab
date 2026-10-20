@@ -63,6 +63,7 @@ valid ones (`api-input-validation.md`).
 | `lab/no-length-in-loop-condition` — `.length` / `.size` in a loop's condition (allowed when the loop changes that collection) | `coding.md` §6.2 / §6.3 |
 | `lab/no-repeated-comparison` — the same comparison twice in one function (allowed when what it reads changes) | `coding.md` §6.3 |
 | `lab/declare-before-loop` — in `hotPaths`: a variable declared inside a loop's body | `coding.md` §6.2 |
+| `lab/no-repeated-string` — a string value 3+ times in a module (module names, keys, types, JSX attributes, `typeof` results aren't values); **registered, on per project** — `'lab/no-repeated-string': 'error'` — until the lab is clean of it | `coding.md` §1, §18.4; LAB D-017 |
 | `react-hooks/rules-of-hooks`, `react-hooks/exhaustive-deps` — with `react: true` | — |
 | ESLint's and typescript-eslint's recommended rules, with the lab's exceptions (`arguments`, `x && y()`, TS overloads, `require` in CommonJS) | `coding.md` §6.1 |
 

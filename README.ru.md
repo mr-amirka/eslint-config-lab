@@ -63,6 +63,7 @@ export default [
 | никаких прямых `addEventListener` / `setTimeout` / `setInterval` / `requestAnimationFrame` | `subscriptions.md` §6 |
 | `lab/no-length-in-loop-condition` — `.length` / `.size` в условии цикла (можно, если цикл меняет эту коллекцию) | `coding.md` §6.2 / §6.3 |
 | `lab/no-repeated-comparison` — одно и то же сравнение дважды в одной функции (можно, если то, что оно читает, меняется) | `coding.md` §6.3 |
+| `lab/no-repeated-string` — строковое значение 3+ раз в модуле (имена модулей, ключи, типы, атрибуты JSX, результаты `typeof` — не значения); **зарегистрировано, включается в проекте** — `'lab/no-repeated-string': 'error'` — пока код лаборатории не очищен | `coding.md` §1, §18.4; LAB D-017 |
 | `lab/declare-before-loop` — в `hotPaths`: переменная, объявленная внутри тела цикла | `coding.md` §6.2 |
 | `react-hooks/rules-of-hooks`, `react-hooks/exhaustive-deps` — при `react: true` | — |
 | рекомендованные правила ESLint и typescript-eslint с исключениями лаборатории (`arguments`, `x && y()`, перегрузки TS, `require` в CommonJS) | `coding.md` §6.1 |

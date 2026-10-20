@@ -8,6 +8,7 @@ const js = require('@eslint/js');
 const declareBeforeLoop = require('./rules/declare-before-loop.cjs');
 const noLengthInLoopCondition = require('./rules/no-length-in-loop-condition.cjs');
 const noRepeatedComparison = require('./rules/no-repeated-comparison.cjs');
+const noRepeatedString = require('./rules/no-repeated-string.cjs');
 const specifierNewline = require('./rules/specifier-newline.cjs');
 
 const WHERE = 'eslint-config-lab';
@@ -21,6 +22,9 @@ const plugin = {
     'declare-before-loop': declareBeforeLoop,
     'no-length-in-loop-condition': noLengthInLoopCondition,
     'no-repeated-comparison': noRepeatedComparison,
+    // Registered, not yet in `lab()`'s rules: a project turns it on with `'lab/no-repeated-string': 'error'` until the
+    // lab's code is clean of it (lab D-017; the rollout — fundamentool PLAN, the owner's choice).
+    'no-repeated-string': noRepeatedString,
     'specifier-newline': specifierNewline,
   },
 };

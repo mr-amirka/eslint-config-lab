@@ -100,6 +100,26 @@ module.exports = {
     const sourceCode = context.sourceCode;
     /** Per function being walked: the comparisons seen and the names it changes. */
     const stack = [];
+    /** A number per variable: two `const result` in two blocks are two variables with one name. */
+    const variableIds = new WeakMap();
+    let nextVariableId = 0;
+
+    /** What `name` means at `node`: its variable, or the global it names. */
+    function meaning(node, name) {
+      if (name === 'this') {
+        return name;
+      }
+      for (let scope = sourceCode.getScope(node); scope; scope = scope.upper) {
+        const variable = scope.set.get(name);
+        if (variable) {
+          if (!variableIds.has(variable)) {
+            variableIds.set(variable, ++nextVariableId);
+          }
+          return `#${variableIds.get(variable)}`;
+        }
+      }
+      return `global:${name}`;
+    }
 
     function enter() {
       stack.push({
@@ -150,7 +170,9 @@ module.exports = {
           return;
         }
         const scope = stack[stack.length - 1];
-        const text = sourceCode.getText(node).replace(/\s+/g, ' ');
+        // The same text over the same variables — not just the same spelling.
+        const names = [...roots(node, new Set())].map((name) => meaning(node, name));
+        const text = `${sourceCode.getText(node).replace(/\s+/g, ' ')} ${names.join(',')}`;
         const first = scope.seen.get(text);
         if (first) {
           scope.repeats.push([

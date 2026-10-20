@@ -14,7 +14,11 @@ const tester = new RuleTester({
 tester.run(
   'no-repeated-comparison', rule, {
     valid: [
-    // computed once
+      // two variables with one name, each in its own block
+      'function f(kind) { switch (kind) { case 1: { const result = a(); exit(result.errors > 0); break; } case 2: { const result = b(); exit(result.errors > 0); break; } } }',
+      // a parameter shadowing the outer name in a nested block of the same function
+      'function f(x) { use(x > 1); { const x = other(); use(x > 1); } }',
+      // computed once
       'function f(entry, value) { const shown = entry === value.page; return [shown ? 1 : 0, shown ? 2 : 3]; }',
       // different comparisons
       'function f(a, b) { return [a === b, a !== b, a < b]; }',

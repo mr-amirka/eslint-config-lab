@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-lab",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "description": "The lab's ESLint rules — coding.md, subscriptions.md, auto-polish.md as checks — and the lab's own rules (LAB D-013).",
   "main": "index.cjs",

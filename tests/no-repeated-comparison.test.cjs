@@ -46,8 +46,39 @@ tester.run(
       'function f(a, b) { return [a + b, a + b]; }',
       // top level, different
       'const a = x === 1; const b = y === 1;',
+      // branches that exclude each other: one run computes it once
+      'function f(a, b) { if (go()) { use(a < b); } else { use(a < b); } }',
+      'function f(a, b) { return go() ? a < b : !(a < b); }',
+      'function f(p, s) { if (up()) { if (p <= s) { return 1; } return 2; } if (down()) { if (p <= s) { return 3; } return 4; } }',
+      'function f(k, x) { switch (k) { case 1: return x > 0; case 2: return x > 0 && k; default: return 0; } }',
+      // once per iteration of a loop
+      'function f(list, x) { for (const item of list) { if (item.on) { use(x > item.v); } } }',
     ],
     invalid: [
+      {
+        // after an `if` that doesn't return, the second one runs too
+        code: 'function f(p, s) { if (up()) { use(p <= s); } return p <= s; }',
+        errors: [
+          {
+            messageId: 'repeated',
+            data: {
+              text: 'p <= s',
+            },
+          },
+        ],
+      },
+      {
+        // two in one loop iteration
+        code: 'function f(list, x) { for (const item of list) { use(x > 1); log(x > 1); } }',
+        errors: [
+          {
+            messageId: 'repeated',
+            data: {
+              text: 'x > 1',
+            },
+          },
+        ],
+      },
       {
         code: 'function f(entry, value) { return { hidden: entry === value.page ? undefined : true, display: entry === value.page ? 1 : 0 }; }',
         errors: [

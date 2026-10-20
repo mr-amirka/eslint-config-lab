@@ -77,9 +77,10 @@ function changedNames(node, out) {
 }
 
 /**
- * coding.md §6.3 (LAB D-013): the same comparison written twice in one function (`entry === value.page` for two
- * attributes) is computed once, into a variable. Not reported when something it reads is reassigned in the function —
- * then the two may differ.
+ * coding.md §6.3 (LAB D-013): the same comparison computed twice in one run of a function (`entry === value.page` for
+ * two attributes) is computed once, into a variable. Not reported when something it reads is reassigned in the
+ * function — then the two may differ — nor when one run can't reach both: branches that exclude each other (`if` /
+ * `else`, a branch that returns) compute it once, and hoisting it would add work on a hot path.
  *
  * @example
  * // ❌ { hidden: entry === value.page ? … , display: entry === value.page ? … }
@@ -100,6 +101,49 @@ module.exports = {
     const sourceCode = context.sourceCode;
     /** Per function being walked: the comparisons seen and the names it changes. */
     const stack = [];
+    /** The code path segments being walked, per code path (functions nest). */
+    const segmentStack = [];
+    /** The loops' way back: segment → the segment at a loop's start it returns to (one per segment). */
+    const loopsBack = new WeakMap();
+    /** The segments each comparison runs in. */
+    const segmentsOf = new WeakMap();
+
+    function segmentStarted(segment) {
+      segmentStack[segmentStack.length - 1].add(segment);
+    }
+
+    function segmentEnded(segment) {
+      segmentStack[segmentStack.length - 1].delete(segment);
+    }
+
+    function loopBack(from, to) {
+      loopsBack.set(from, to);
+    }
+
+    /**
+     * Whether one run can compute `second` after `first`: they share a segment, or a segment of `second` follows one of
+     * `first` going forward (a loop's way back to its start isn't followed — each iteration computes it anew).
+     */
+    function bothRun(first, second) {
+      const targets = new Set(segmentsOf.get(second));
+      const queue = [...segmentsOf.get(first)];
+      const visited = new Set(queue);
+      while (queue.length) {
+        const segment = queue.shift();
+        if (targets.has(segment)) {
+          return true;
+        }
+        const back = loopsBack.get(segment);
+        for (const next of segment.nextSegments) {
+          if (!visited.has(next) && next !== back) {
+            visited.add(next);
+            queue.push(next);
+          }
+        }
+      }
+      return false;
+    }
+
     /** A number per variable: two `const result` in two blocks are two variables with one name. */
     const variableIds = new WeakMap();
     let nextVariableId = 0;
@@ -136,7 +180,7 @@ module.exports = {
         first,
       ] of scope.repeats) {
         const names = roots(node, new Set());
-        if ([...names].some((name) => scope.changed.has(name))) {
+        if ([...names].some((name) => scope.changed.has(name)) || !bothRun(first, node)) {
           continue;
         }
         context.report({
@@ -157,6 +201,17 @@ module.exports = {
     }
 
     return {
+      onCodePathStart() {
+        segmentStack.push(new Set());
+      },
+      onCodePathEnd() {
+        segmentStack.pop();
+      },
+      onCodePathSegmentStart: segmentStarted,
+      onCodePathSegmentEnd: segmentEnded,
+      onUnreachableCodePathSegmentStart: segmentStarted,
+      onUnreachableCodePathSegmentEnd: segmentEnded,
+      onCodePathSegmentLoop: loopBack,
       'Program': enter,
       'Program:exit': leave,
       'FunctionDeclaration': enter,
@@ -170,6 +225,7 @@ module.exports = {
           return;
         }
         const scope = stack[stack.length - 1];
+        segmentsOf.set(node, [...segmentStack[segmentStack.length - 1]]);
         // The same text over the same variables — not just the same spelling.
         const names = [...roots(node, new Set())].map((name) => meaning(node, name));
         const text = `${sourceCode.getText(node).replace(/\s+/g, ' ')} ${names.join(',')}`;

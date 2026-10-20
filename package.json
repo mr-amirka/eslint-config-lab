@@ -1,6 +1,6 @@
 {
   "name": "eslint-config-lab",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "description": "The lab's ESLint rules — coding.md, subscriptions.md, auto-polish.md as checks — and the lab's own rules (LAB D-013).",
   "main": "index.cjs",
@@ -20,7 +20,7 @@
     "eslint-plugin-react-hooks": "^7.1.1"
   },
   "peerDependencies": {
-    "eslint": ">=9.0.0"
+    "eslint": ">=10.0.0"
   },
   "devDependencies": {
     "eslint": "^10.9.1",

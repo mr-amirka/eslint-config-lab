@@ -38,10 +38,14 @@ const SUBSCRIPTIONS = [
   },
 ];
 
-/** Files a tool requires a default export from (coding.md §6.7: the exception for tool configs). */
+/**
+ * Files a tool requires a default export from (coding.md §6.7: the exception for tool configs): configs and minotation
+ * presets (`*.mn.ts`, loaded by minotation's build plugins through their default export).
+ */
 const CONFIG_FILES = [
   '**/*.config.{js,cjs,mjs,ts,cts,mts}',
   '**/.*rc.{js,cjs,mjs}',
+  '**/*.mn.{js,ts}',
 ];
 
 /** CommonJS modules. */

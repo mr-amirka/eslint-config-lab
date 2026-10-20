@@ -22,7 +22,8 @@ function roots(node, out) {
     return out;
   }
   if (node.type === 'MemberExpression') {
-    return roots(node.object, out);
+    // A computed key is read too: `source[i + 1]` depends on `i`.
+    return node.computed ? roots(node.property, roots(node.object, out)) : roots(node.object, out);
   }
   if (node.type === 'ThisExpression') {
     out.add('this');

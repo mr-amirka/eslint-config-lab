@@ -40,6 +40,8 @@ tester.run(
       'function f(a) { const x = a > 1; [, a] = pair(); return x && a > 1; }',
       'function f(o) { const x = o.k === 1; ({ k: o.k, ...o.rest } = next()); return x && o.k === 1; }',
       'function f() { let [k = 0, ...rest] = list(); const x = k === 1; return x && k === 1 && rest; }',
+      // the computed key changes in between
+      'function f(s) { let i = 0; if (s[i + 1] === "/") { i += 2; } return s[i + 1] === "/"; }',
       // a member written through a computed key
       'function f(m, k) { const x = m.size > 0; m[k] = 1; return x && m.size > 0; }',
       // arithmetic isn't a comparison
@@ -55,6 +57,18 @@ tester.run(
       'function f(list, x) { for (const item of list) { if (item.on) { use(x > item.v); } } }',
     ],
     invalid: [
+      {
+        // the computed key doesn't change: the same read
+        code: 'function f(s, i) { use(s[i + 1] === "/"); return s[i + 1] === "/"; }',
+        errors: [
+          {
+            messageId: 'repeated',
+            data: {
+              text: 's[i + 1] === "/"',
+            },
+          },
+        ],
+      },
       {
         // after an `if` that doesn't return, the second one runs too
         code: 'function f(p, s) { if (up()) { use(p <= s); } return p <= s; }',

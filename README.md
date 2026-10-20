@@ -43,6 +43,9 @@ export default [
 | `react` | `false` | React's hook rules, as errors |
 | `hotPaths` | — | files where `coding.md` §6.2 holds strictly: a loop's variables are declared before the loop |
 
+Tests (`tests/`, `__tests__/`, `*.test.*`, `*.spec.*`) may use timers directly and `require()` (Jest's fresh module
+instance); CommonJS files may `require()`.
+
 An unknown option or a wrong value is an error at once, with the nearest valid name ("did you mean") and the list of
 valid ones (`api-input-validation.md`).
 

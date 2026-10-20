@@ -52,8 +52,8 @@ describe('eslint-config-lab', () => {
       'specifier-newline',
     ]);
     expect(result.sameRules).toBe(true);
-    // the main entry + the tool configs' exemption + CommonJS
-    expect(result.entries).toBe(3);
+    // the main entry + the tool configs' exemption + tests + CommonJS
+    expect(result.entries).toBe(4);
   });
 
   it('defaults: TS / JS sources, no globals', () => {
@@ -116,7 +116,23 @@ describe('eslint-config-lab', () => {
     expect(lint(
       code, options, 'src/app/page.ts',
     ).ruleIds).toEqual([]);
-    expect(lint(undefined, options).entries).toBe(4);
+    expect(lint(undefined, options).entries).toBe(5);
+  });
+
+  it('tests may use timers and require', () => {
+    const code = 'const x = require(\'x\');\nsetTimeout(x, 1);\n';
+    expect(lint(
+      code, TS, 'tests/a.test.ts',
+    ).ruleIds).toEqual([]);
+    expect(lint(
+      code, TS, 'src/__tests__/a.ts',
+    ).ruleIds).toEqual([]);
+    expect(lint(
+      code, TS, 'src/a.ts',
+    ).ruleIds).toEqual([
+      '@typescript-eslint/no-require-imports',
+      'no-restricted-syntax',
+    ]);
   });
 
   it('CommonJS may require; an ES module may not', () => {

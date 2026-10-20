@@ -47,6 +47,14 @@ const CONFIG_FILES = [
 /** CommonJS modules. */
 const COMMONJS_FILES = ['**/*.{cjs,cts}'];
 
+/** Tests — a cold path with its own needs. */
+const TEST_FILES = [
+  '**/tests/**',
+  '**/__tests__/**',
+  '**/*.test.*',
+  '**/*.spec.*',
+];
+
 /**
  * The rules, by convention. ESLint's recommended set is `@eslint/js` 10's — the lab runs ESLint 10 everywhere
  * (`peerDependencies`): an older ESLint doesn't know some of its rules, and an unknown rule fails the whole config.
@@ -323,6 +331,18 @@ function lab(options = {}) {
       files: CONFIG_FILES,
       rules: {
         'no-restricted-exports': 'off',
+      },
+    },
+    {
+      // Tests sleep with timers and fake the browser's own APIs — subscriptions.md is about the code under test; Jest's
+      // `require()` inside a test gives a fresh module instance.
+      files: TEST_FILES,
+      plugins: {
+        '@typescript-eslint': tseslint,
+      },
+      rules: {
+        'no-restricted-syntax': 'off',
+        '@typescript-eslint/no-require-imports': 'off',
       },
     },
     {

@@ -5,6 +5,9 @@ const tseslint = require('@typescript-eslint/eslint-plugin');
 const tsparser = require('@typescript-eslint/parser');
 const stylistic = require('@stylistic/eslint-plugin');
 const js = require('@eslint/js');
+const {
+  builtinRules,
+} = require('eslint/use-at-your-own-risk');
 const declareBeforeLoop = require('./rules/declare-before-loop.cjs');
 const noLengthInLoopCondition = require('./rules/no-length-in-loop-condition.cjs');
 const noRepeatedComparison = require('./rules/no-repeated-comparison.cjs');
@@ -47,9 +50,15 @@ const CONFIG_FILES = [
 /** CommonJS modules. */
 const COMMONJS_FILES = ['**/*.{cjs,cts}'];
 
+/**
+ * ESLint's recommended rules that the ESLint running this config has: `@eslint/js` may be newer than a project's
+ * ESLint (ESLint 9 has no `no-unassigned-vars`), and an unknown rule fails the whole config.
+ */
+const recommended = Object.fromEntries(Object.entries(js.configs.recommended.rules).filter(([name]) => builtinRules.has(name)));
+
 /** The rules, by convention. */
 const rules = {
-  ...js.configs.recommended.rules,
+  ...recommended,
   ...tseslint.configs.recommended.rules,
 
   // TypeScript checks undefined names itself; the base rule misreads TS syntax (typescript-eslint's advice).

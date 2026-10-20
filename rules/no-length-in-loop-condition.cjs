@@ -21,6 +21,18 @@ const BOUNDS = {
   ],
 };
 
+/**
+ * Whether `node` is a stable reference — a name, `this` or a chain of their properties (`list`, `this.items`,
+ * `state.rows`). A call or an assignment (`(batch = await next()).length`) gives a new value on every iteration:
+ * there is nothing to read once.
+ */
+function isReference(node) {
+  if (node.type === 'Identifier' || node.type === 'ThisExpression') {
+    return true;
+  }
+  return node.type === 'MemberExpression' && !node.computed && isReference(node.object);
+}
+
 /** The source of `node`'s object (`list` for `list.length`, `this.items` for `this.items.length`). */
 function objectText(sourceCode, member) {
   return sourceCode.getText(member.object);
@@ -69,7 +81,7 @@ module.exports = {
         if (!node || typeof node.type !== 'string') {
           return;
         }
-        if (node.type === 'MemberExpression' && !node.computed && Object.hasOwn(BOUNDS, node.property.name)) {
+        if (node.type === 'MemberExpression' && !node.computed && Object.hasOwn(BOUNDS, node.property.name) && isReference(node.object)) {
           found.push(node);
         }
         for (const key of Object.keys(node)) {

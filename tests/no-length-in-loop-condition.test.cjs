@@ -31,6 +31,10 @@ tester.run(
       'for (;;) { if (done()) { break; } }',
       // a computed `[length]` member isn't the property
       'for (let i = 0; i < map[length]; i++) { use(i); }',
+      // a value fetched on every iteration: nothing to read once
+      'async function f() { let batch; while ((batch = await next()).length) { use(batch); } }',
+      'while (pending().size > 0) { step(); }',
+      'for (let i = 0; i < rows[k].length; i++) { use(i); }',
       // a set emptied in the loop
       'while (pending.size) { for (const item of pending) { pending.delete(item); } }',
     ],

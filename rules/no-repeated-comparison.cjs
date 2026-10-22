@@ -1,5 +1,8 @@
 'use strict';
 
+/** `this` — kept among the names a comparison reads. */
+const THIS = 'this';
+
 /** The comparisons a function shouldn't write twice. */
 const OPERATORS = new Set([
   '===',
@@ -26,7 +29,7 @@ function roots(node, out) {
     return node.computed ? roots(node.property, roots(node.object, out)) : roots(node.object, out);
   }
   if (node.type === 'ThisExpression') {
-    out.add('this');
+    out.add(THIS);
     return out;
   }
   for (const key of Object.keys(node)) {
@@ -56,7 +59,7 @@ function changedNames(node, out) {
       out.push(node.name);
       break;
     case 'ThisExpression':
-      out.push('this');
+      out.push(THIS);
       break;
     case 'MemberExpression':
       changedNames(node.object, out);
@@ -151,7 +154,7 @@ module.exports = {
 
     /** What `name` means at `node`: its variable, or the global it names. */
     function meaning(node, name) {
-      if (name === 'this') {
+      if (name === THIS) {
         return name;
       }
       for (let scope = sourceCode.getScope(node); scope; scope = scope.upper) {

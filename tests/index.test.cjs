@@ -123,6 +123,16 @@ describe('eslint-config-lab', () => {
     expect(lint(undefined, options).entries).toBe(5);
   });
 
+  it('a string value 3+ times in a module: an error in code, not in tests (lab D-017.3)', () => {
+    const code = 'use(\'x\');\nuse(\'x\');\nuse(\'x\');\n';
+    expect(lint(
+      code, TS, 'src/a.ts',
+    ).ruleIds).toEqual(['lab/no-repeated-string']);
+    expect(lint(
+      code, TS, 'tests/a.test.ts',
+    ).ruleIds).toEqual([]);
+  });
+
   it('tests may use timers and require', () => {
     const code = 'const x = require(\'x\');\nsetTimeout(x, 1);\n';
     expect(lint(

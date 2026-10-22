@@ -11,6 +11,12 @@ const noRepeatedComparison = require('./rules/no-repeated-comparison.cjs');
 const noRepeatedString = require('./rules/no-repeated-string.cjs');
 const specifierNewline = require('./rules/specifier-newline.cjs');
 
+/** The severities a rule is set to. */
+const ERROR = 'error';
+const OFF = 'off';
+/** A name starting with `_` is unused on purpose. */
+const UNUSED_NAME = '^_';
+
 const WHERE = 'eslint-config-lab';
 
 /** The lab's own rules, as an ESLint plugin (`lab/…`). */
@@ -22,8 +28,6 @@ const plugin = {
     'declare-before-loop': declareBeforeLoop,
     'no-length-in-loop-condition': noLengthInLoopCondition,
     'no-repeated-comparison': noRepeatedComparison,
-    // Registered, not yet in `lab()`'s rules: a project turns it on with `'lab/no-repeated-string': 'error'` until the
-    // lab's code is clean of it (lab D-017; the rollout — fundamentool PLAN, the owner's choice).
     'no-repeated-string': noRepeatedString,
     'specifier-newline': specifierNewline,
   },
@@ -31,7 +35,7 @@ const plugin = {
 
 /** subscriptions.md §6: listeners and timers only through fundamentool's helpers. */
 const SUBSCRIPTIONS = [
-  'error',
+  ERROR,
   {
     selector: "CallExpression[callee.property.name='addEventListener']",
     message: 'Use attachEvent from fundamentool (subscriptions.md §1).',
@@ -72,26 +76,26 @@ const rules = {
   ...tseslint.configs.recommended.rules,
 
   // TypeScript checks undefined names itself; the base rule misreads TS syntax (typescript-eslint's advice).
-  'no-undef': 'off',
+  'no-undef': OFF,
   // TS overloads are not redeclarations.
-  'no-redeclare': 'off',
-  '@typescript-eslint/no-redeclare': 'error',
+  'no-redeclare': OFF,
+  '@typescript-eslint/no-redeclare': ERROR,
   // coding.md §6.2: a placeholder value before a loop is overwritten on purpose (a stable hidden class).
-  'no-useless-assignment': 'off',
+  'no-useless-assignment': OFF,
   // coding.md: `x && y()` — the lab's terse conditional call.
-  '@typescript-eslint/no-unused-expressions': 'off',
+  '@typescript-eslint/no-unused-expressions': OFF,
   // coding.md §6.1: `arguments` instead of rest parameters on hot paths.
-  'prefer-rest-params': 'off',
-  'prefer-spread': 'off',
+  'prefer-rest-params': OFF,
+  'prefer-spread': OFF,
 
   // auto-polish.md (LAB D-012): unused names fail; `_name` — unused on purpose; props dropped with a rest are fine.
-  'no-unused-vars': 'off',
+  'no-unused-vars': OFF,
   '@typescript-eslint/no-unused-vars': [
-    'error',
+    ERROR,
     {
-      argsIgnorePattern: '^_',
-      varsIgnorePattern: '^_',
-      caughtErrorsIgnorePattern: '^_',
+      argsIgnorePattern: UNUSED_NAME,
+      varsIgnorePattern: UNUSED_NAME,
+      caughtErrorsIgnorePattern: UNUSED_NAME,
       ignoreRestSiblings: true,
     },
   ],
@@ -102,7 +106,7 @@ const rules = {
   // coding.md §6.7: named exports only — `export default` lets one module be imported under any name. Tool configs
   // (`CONFIG_FILES`) are exempt.
   'no-restricted-exports': [
-    'error',
+    ERROR,
     {
       restrictDefaultExports: {
         direct: true,
@@ -116,25 +120,25 @@ const rules = {
 
   // coding.md §6.7: every element on its own line; one statement per line.
   '@stylistic/indent': [
-    'error',
+    ERROR,
     2,
     {
       SwitchCase: 1,
     },
   ],
   '@stylistic/semi': [
-    'error',
+    ERROR,
     'always',
   ],
   '@stylistic/quotes': [
-    'error',
+    ERROR,
     'single',
     {
       avoidEscape: true,
     },
   ],
   '@stylistic/object-curly-newline': [
-    'error',
+    ERROR,
     {
       ObjectExpression: {
         minProperties: 1,
@@ -151,14 +155,14 @@ const rules = {
     },
   ],
   '@stylistic/object-property-newline': [
-    'error',
+    ERROR,
     {
       allowAllPropertiesOnSameLine: false,
     },
   ],
-  'lab/specifier-newline': 'error',
+  'lab/specifier-newline': ERROR,
   '@stylistic/function-paren-newline': [
-    'error',
+    ERROR,
     {
       minItems: 3,
     },
@@ -166,24 +170,24 @@ const rules = {
   // LAB D-013: arrays of two or more elements — each element on its own line, destructuring too (LAB D-014); the
   // brackets break when the elements do.
   '@stylistic/array-bracket-newline': [
-    'error',
+    ERROR,
     {
       multiline: true,
     },
   ],
   '@stylistic/array-element-newline': [
-    'error',
+    ERROR,
     {
       minItems: 2,
     },
   ],
   '@stylistic/comma-dangle': [
-    'error',
+    ERROR,
     'always-multiline',
   ],
-  '@stylistic/no-trailing-spaces': 'error',
+  '@stylistic/no-trailing-spaces': ERROR,
   '@stylistic/max-statements-per-line': [
-    'error',
+    ERROR,
     {
       max: 1,
     },
@@ -191,11 +195,11 @@ const rules = {
 
   // coding.md §6.8: if / else / for / while — always with a block.
   curly: [
-    'error',
+    ERROR,
     'all',
   ],
   '@stylistic/brace-style': [
-    'error',
+    ERROR,
     '1tbs',
     {
       allowSingleLine: false,
@@ -203,14 +207,16 @@ const rules = {
   ],
 
   // coding.md §6.2 / §6.3 (LAB D-013).
-  'lab/no-length-in-loop-condition': 'error',
-  'lab/no-repeated-comparison': 'error',
+  'lab/no-length-in-loop-condition': ERROR,
+  'lab/no-repeated-comparison': ERROR,
+  // coding.md §1: a value 3+ times in a module is a constant (lab D-017; on by default since 0.3.0 — D-017.3)
+  'lab/no-repeated-string': ERROR,
 };
 
 /** React's hook rules (`react: true`): a class of mistakes neither tsc nor a build catches. Errors, not warnings (LAB D-012). */
 const REACT_RULES = {
-  'react-hooks/rules-of-hooks': 'error',
-  'react-hooks/exhaustive-deps': 'error',
+  'react-hooks/rules-of-hooks': ERROR,
+  'react-hooks/exhaustive-deps': ERROR,
 };
 
 /** What `lab()` accepts and what each option must be. */
@@ -338,7 +344,7 @@ function lab(options = {}) {
     {
       files: CONFIG_FILES,
       rules: {
-        'no-restricted-exports': 'off',
+        'no-restricted-exports': OFF,
       },
     },
     {
@@ -347,10 +353,13 @@ function lab(options = {}) {
       files: TEST_FILES,
       plugins: {
         '@typescript-eslint': tseslint,
+        lab: plugin,
       },
       rules: {
-        'no-restricted-syntax': 'off',
-        '@typescript-eslint/no-require-imports': 'off',
+        'no-restricted-syntax': OFF,
+        '@typescript-eslint/no-require-imports': OFF,
+        // A test repeats its expected values on purpose — each assertion reads on its own
+        'lab/no-repeated-string': OFF,
       },
     },
     {
@@ -360,7 +369,7 @@ function lab(options = {}) {
         '@typescript-eslint': tseslint,
       },
       rules: {
-        '@typescript-eslint/no-require-imports': 'off',
+        '@typescript-eslint/no-require-imports': OFF,
       },
     },
   ];
@@ -371,7 +380,7 @@ function lab(options = {}) {
         lab: plugin,
       },
       rules: {
-        'lab/declare-before-loop': 'error',
+        'lab/declare-before-loop': ERROR,
       },
     });
   }

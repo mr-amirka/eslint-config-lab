@@ -9,6 +9,7 @@ const declareBeforeLoop = require('./rules/declare-before-loop.cjs');
 const noLengthInLoopCondition = require('./rules/no-length-in-loop-condition.cjs');
 const noRepeatedComparison = require('./rules/no-repeated-comparison.cjs');
 const noRepeatedString = require('./rules/no-repeated-string.cjs');
+const devOnlyChecks = require('./rules/dev-only-checks.cjs');
 const specifierNewline = require('./rules/specifier-newline.cjs');
 
 /** The severities a rule is set to. */
@@ -29,6 +30,7 @@ const plugin = {
     'no-length-in-loop-condition': noLengthInLoopCondition,
     'no-repeated-comparison': noRepeatedComparison,
     'no-repeated-string': noRepeatedString,
+    'dev-only-checks': devOnlyChecks,
     'specifier-newline': specifierNewline,
   },
 };
@@ -211,6 +213,8 @@ const rules = {
   'lab/no-repeated-comparison': ERROR,
   // coding.md §1: a value 3+ times in a module is a constant (lab D-017; on by default since 0.3.0 — D-017.3)
   'lab/no-repeated-string': ERROR,
+  // api-input-validation.md: a check of options runs only in development; a schema is built on first use (lab D-023)
+  'lab/dev-only-checks': ERROR,
 };
 
 /** React's hook rules (`react: true`): a class of mistakes neither tsc nor a build catches. Errors, not warnings (LAB D-012). */
@@ -360,6 +364,8 @@ function lab(options = {}) {
         '@typescript-eslint/no-require-imports': OFF,
         // A test repeats its expected values on purpose — each assertion reads on its own
         'lab/no-repeated-string': OFF,
+        // A test checks options and builds schemas as it needs
+        'lab/dev-only-checks': OFF,
       },
     },
     {

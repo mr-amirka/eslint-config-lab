@@ -32,6 +32,8 @@ tester.run(
       // keys
       "const o = { 'a': 1 }; const p = { 'a': 2 }; const q = { 'a': 3 };",
       "o['a'] = 1; p['a'] = 2; q['a'] = 3;",
+      // the build mode, written out at each check (lab D-023)
+      "if (process.env.NODE_ENV !== 'production') a(); if (process.env.NODE_ENV !== 'production') b(); if ('production' !== process.env.NODE_ENV) c();",
       // typeof results
       "if (typeof a === 'string' || typeof b === 'string' || 'string' === typeof c) {}",
       // JSX attributes (classes — coding.md §17.6)

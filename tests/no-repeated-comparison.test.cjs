@@ -14,6 +14,8 @@ const tester = new RuleTester({
 tester.run(
   'no-repeated-comparison', rule, {
     valid: [
+      // the build mode is written out at each check — a variable would hide it from the bundler (lab D-023)
+      "function f() { if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') a(); if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') b(); }",
       // two variables with one name, each in its own block
       'function f(kind) { switch (kind) { case 1: { const result = a(); exit(result.errors > 0); break; } case 2: { const result = b(); exit(result.errors > 0); break; } } }',
       // a parameter shadowing the outer name in a nested block of the same function

@@ -1,4 +1,7 @@
 'use strict';
+const {
+  isBuildModeComparison,
+} = require('./build-mode.cjs');
 
 /** `this` — kept among the names a comparison reads. */
 const THIS = 'this';
@@ -225,7 +228,8 @@ module.exports = {
       'ArrowFunctionExpression': enter,
       'ArrowFunctionExpression:exit': leave,
       BinaryExpression(node) {
-        if (!OPERATORS.has(node.operator) || !stack.length) {
+        // The build mode (lab D-023): a bundler must see it written out at each check — a variable would hide it
+        if (!OPERATORS.has(node.operator) || !stack.length || isBuildModeComparison(node)) {
           return;
         }
         const scope = stack[stack.length - 1];

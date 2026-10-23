@@ -62,8 +62,9 @@ export default [
 | неиспользуемые имена — ошибка (`_name` — намеренно не используется; свойства, отброшенные через rest, — норма) | `auto-polish.md`, LAB D-012 |
 | никаких прямых `addEventListener` / `setTimeout` / `setInterval` / `requestAnimationFrame` | `subscriptions.md` §6 |
 | `lab/no-length-in-loop-condition` — `.length` / `.size` в условии цикла (можно, если цикл меняет эту коллекцию) | `coding.md` §6.2 / §6.3 |
-| `lab/no-repeated-comparison` — одно и то же сравнение дважды в одной функции (можно, если то, что оно читает, меняется) | `coding.md` §6.3 |
-| `lab/no-repeated-string` — строковое значение 3+ раз в модуле (имена модулей, ключи, типы, атрибуты JSX, результаты `typeof` — не значения); **включено по умолчанию с 0.3.0** (lab D-017.3), выключено в тестах | `coding.md` §1, §18.4; LAB D-017 |
+| `lab/no-repeated-comparison` — одно и то же сравнение дважды в одной функции (можно, если то, что оно читает, меняется; режим сборки — `process.env.NODE_ENV`, `typeof process` — пишется у каждой проверки, lab D-023) | `coding.md` §6.3 |
+| `lab/no-repeated-string` — строковое значение 3+ раз в модуле (имена модулей, ключи, типы, атрибуты JSX, результаты `typeof`, режим сборки в сравнении с `process.env.NODE_ENV` — не значения); **включено по умолчанию с 0.3.0** (lab D-017.3), выключено в тестах | `coding.md` §1, §18.4; LAB D-017 |
+| `lab/dev-only-checks` — проверка опций (`schema.parse(value, where)`, `assertKnownOptions`) вне ветки `process.env.NODE_ENV !== 'production'`; схема, построенная при загрузке модуля (из импорта `…/schema`, без pure-аннотации). Проверка данных, приходящих во время работы, остаётся — с disable-комментарием и причиной. Выключено в тестах | `api-input-validation.md`; LAB D-023 |
 | `lab/declare-before-loop` — в `hotPaths`: переменная, объявленная внутри тела цикла | `coding.md` §6.2 |
 | `react-hooks/rules-of-hooks`, `react-hooks/exhaustive-deps` — при `react: true` | — |
 | рекомендованные правила ESLint и typescript-eslint с исключениями лаборатории (`arguments`, `x && y()`, перегрузки TS, `require` в CommonJS) | `coding.md` §6.1 |

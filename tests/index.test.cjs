@@ -47,6 +47,7 @@ describe('eslint-config-lab', () => {
     expect(result.labRule).toBe('error');
     expect(result.pluginRules).toEqual([
       'declare-before-loop',
+      'dev-only-checks',
       'no-length-in-loop-condition',
       'no-repeated-comparison',
       'no-repeated-string',

@@ -1,4 +1,7 @@
 'use strict';
+const {
+  isNodeEnv,
+} = require('./build-mode.cjs');
 
 /** How many times a string may appear in a module before it must be a constant (coding.md §1; lab D-017). */
 const DEFAULT_THRESHOLD = 3;
@@ -37,6 +40,10 @@ function isValue(node) {
   if (parent.type === 'BinaryExpression') {
     const other = parent.left === node ? parent.right : parent.left;
     if (other.type === 'UnaryExpression' && other.operator === 'typeof') {
+      return false;
+    }
+    // `process.env.NODE_ENV !== 'production'` — a build mode, written out at each check (lab D-023)
+    if (isNodeEnv(other)) {
       return false;
     }
   }

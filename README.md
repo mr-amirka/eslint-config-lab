@@ -61,9 +61,10 @@ valid ones (`api-input-validation.md`).
 | unused names are errors (`_name` — unused on purpose; props dropped with a rest are fine) | `auto-polish.md`, LAB D-012 |
 | no direct `addEventListener` / `setTimeout` / `setInterval` / `requestAnimationFrame` | `subscriptions.md` §6 |
 | `lab/no-length-in-loop-condition` — `.length` / `.size` in a loop's condition (allowed when the loop changes that collection) | `coding.md` §6.2 / §6.3 |
-| `lab/no-repeated-comparison` — the same comparison twice in one function (allowed when what it reads changes) | `coding.md` §6.3 |
+| `lab/no-repeated-comparison` — the same comparison twice in one function (allowed when what it reads changes; the build mode — `process.env.NODE_ENV`, `typeof process` — is written out at each check, lab D-023) | `coding.md` §6.3 |
 | `lab/declare-before-loop` — in `hotPaths`: a variable declared inside a loop's body | `coding.md` §6.2 |
-| `lab/no-repeated-string` — a string value 3+ times in a module (module names, keys, types, JSX attributes, `typeof` results aren't values); **on by default since 0.3.0** (lab D-017.3), off in tests | `coding.md` §1, §18.4; LAB D-017 |
+| `lab/no-repeated-string` — a string value 3+ times in a module (module names, keys, types, JSX attributes, `typeof` results, a build mode compared with `process.env.NODE_ENV` aren't values); **on by default since 0.3.0** (lab D-017.3), off in tests | `coding.md` §1, §18.4; LAB D-017 |
+| `lab/dev-only-checks` — a check of options (`schema.parse(value, where)`, `assertKnownOptions`) outside a `process.env.NODE_ENV !== 'production'` branch; a schema built when its module loads (from a `…/schema` import, without a pure annotation). A check of data that arrives at run time stays — with a disable comment and its reason. Off in tests | `api-input-validation.md`; LAB D-023 |
 | `react-hooks/rules-of-hooks`, `react-hooks/exhaustive-deps` — with `react: true` | — |
 | ESLint's and typescript-eslint's recommended rules, with the lab's exceptions (`arguments`, `x && y()`, TS overloads, `require` in CommonJS) | `coding.md` §6.1 |
 

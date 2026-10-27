@@ -38,6 +38,9 @@ tester.run(
       "if (typeof a === 'string' || typeof b === 'string' || 'string' === typeof c) {}",
       // JSX attributes (classes — coding.md §17.6)
       'const v = <div><a className="dF" /><b className="dF" /><i className="dF" /></div>;',
+      // a JSX space among children (lab D-034) — in an element and a fragment
+      "const v = <div>a{' '}<b />{' '}c{' '}<i /></div>;",
+      "const v = <>a{' '}<b />{' '}c{' '}<i /></>;",
       // directives, empty strings, tagged templates
       "'use strict'; use(''); use(''); use('');",
       'css`a`; css`a`; css`a`;',
@@ -53,6 +56,15 @@ tester.run(
       },
     ],
     invalid: [
+      {
+        // a space as an attribute's or a call's value is a value
+        code: "const v = <div>{use(' ')}{use(' ')}{use(' ')}</div>;",
+        errors: [
+          {
+            messageId: 'repeated',
+          },
+        ],
+      },
       {
         code: "use('url'); use('url'); use('url'); use('url');",
         errors: [

@@ -6,7 +6,10 @@ const {
 /** How many times a string may appear in a module before it must be a constant (coding.md §1; lab D-017). */
 const DEFAULT_THRESHOLD = 3;
 
-/** The parent node types whose string is a name, not a value: module names, keys, types, JSX attributes. */
+/**
+ * The parent node types whose string is a name, not a value: module names, keys, types, JSX attributes. A JSX space
+ * (`{' '}` among children) isn't one either — see `isValue`.
+ */
 const NOT_VALUES = new Set([
   'ImportDeclaration',
   'ExportNamedDeclaration',
@@ -19,10 +22,20 @@ const NOT_VALUES = new Set([
   'JSXAttribute',
 ]);
 
+/** The parents whose `{ … }` is a child, not an attribute's value. */
+const JSX_PARENTS = new Set([
+  'JSXElement',
+  'JSXFragment',
+]);
+
 /** Whether a string literal is a value of the code — not a name the language or a tool reads. */
 function isValue(node) {
   const parent = node.parent;
   if (!parent || NOT_VALUES.has(parent.type) || parent.type === 'ExpressionStatement' && parent.directive) {
+    return false;
+  }
+  // `{' '}` among JSX children — the space between a text and an expression on separate lines (lab D-034), layout
+  if (parent.type === 'JSXExpressionContainer' && JSX_PARENTS.has(parent.parent.type) && !node.value.trim()) {
     return false;
   }
   // `{ 'key': value }`, `obj['key']` — a name of a property

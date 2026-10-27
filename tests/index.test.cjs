@@ -48,6 +48,7 @@ describe('eslint-config-lab', () => {
     expect(result.pluginRules).toEqual([
       'declare-before-loop',
       'dev-only-checks',
+      'jsx-child-curly-newline',
       'no-length-in-loop-condition',
       'no-repeated-comparison',
       'no-repeated-string',
@@ -80,6 +81,34 @@ describe('eslint-config-lab', () => {
   it('import names one per line; one statement per line (coding.md §6.7)', () => {
     expect(lint('import {\n  a, b,\n} from \'./x\';\nuse(a, b);\n', TS).ruleIds).toContain('lab/specifier-newline');
     expect(lint('use(1); use(2);\n', TS).ruleIds).toContain('@stylistic/max-statements-per-line');
+  });
+
+  it('JSX: every attribute and child on its own line; a multi-line child\'s braces too (coding.md §6.7, LAB D-034)', () => {
+    const TSX = {
+      files: ['**/*.tsx'],
+    };
+    const lintTsx = (code) => lint(
+      code, TSX, 'a.tsx',
+    ).ruleIds;
+    // the owner's sketch: one attribute per line, a single one included; the child on its own line
+    expect(lintTsx('export const a = (\n  <h1\n    className="f32"\n  >\n    {LEX_APP_TITLE()}\n  </h1>\n);\n')).toEqual([]);
+    // an element without attributes keeps its one short child
+    expect(lintTsx('export const a = <Local>{LEX_APP_TITLE}</Local>;\n')).toEqual([]);
+    // on one line only the first attribute is reported; the bracket and the child follow once `--fix` breaks the tag
+    expect(lintTsx('export const a = <h1 className="f32">{title}</h1>;\n')).toEqual(['@stylistic/jsx-first-prop-new-line']);
+    expect(lintTsx('export const a = (\n  <h1\n    className="f32">{title}</h1>\n);\n')).toEqual([
+      '@stylistic/jsx-closing-bracket-location',
+      '@stylistic/jsx-one-expression-per-line',
+    ]);
+    expect(lintTsx('export const a = (\n  <A\n    b={1} c={2}\n  />\n);\n')).toContain('@stylistic/jsx-max-props-per-line');
+    expect(lintTsx('export const a = (\n  <div>\n    {on\n      ? a\n      : b}\n  </div>\n);\n')).toEqual([
+      'lab/jsx-child-curly-newline',
+      'lab/jsx-child-curly-newline',
+    ]);
+    expect(lintTsx('export const a = (\n  <div>\n    {\n      title\n    }\n  </div>\n);\n')).toEqual([
+      '@stylistic/jsx-curly-newline',
+      '@stylistic/jsx-curly-newline',
+    ]);
   });
 
   it('named exports only; a tool config may export a default (coding.md §6.7)', () => {

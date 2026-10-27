@@ -56,6 +56,7 @@ valid ones (`api-input-validation.md`).
 | one property / argument (3+) / parameter (3+) per line; **arrays of 2+ elements — one element per line**, destructuring too | `coding.md` §6.7, LAB D-013, D-014 |
 | `lab/specifier-newline` — every name in an `import` / `export … from` `{}` on its own line, a single one included (auto-fixed) | `coding.md` §6.7 |
 | one statement per line | `coding.md` §6.7 |
+| JSX: every attribute on its own line, a single one included; the closing bracket on the line's indent; every child on its own line, except one short child of an element without attributes (`<Local>{LEX_APP_TITLE}</Local>`); `lab/jsx-child-curly-newline` — a multi-line child's `{` and `}` on their own lines (all auto-fixed) | `coding.md` §6.7, LAB D-034 |
 | named exports only — no `export default`; tool configs (`*.config.*`, `.*rc.*`) and minotation presets (`*.mn.ts`) are exempt | `coding.md` §6.7 |
 | `if` / `else` / `for` / `while` always with a block | `coding.md` §6.8 |
 | unused names are errors (`_name` — unused on purpose; props dropped with a rest are fine) | `auto-polish.md`, LAB D-012 |

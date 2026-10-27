@@ -11,10 +11,13 @@ const noRepeatedComparison = require('./rules/no-repeated-comparison.cjs');
 const noRepeatedString = require('./rules/no-repeated-string.cjs');
 const devOnlyChecks = require('./rules/dev-only-checks.cjs');
 const specifierNewline = require('./rules/specifier-newline.cjs');
+const jsxChildCurlyNewline = require('./rules/jsx-child-curly-newline.cjs');
 
 /** The severities a rule is set to. */
 const ERROR = 'error';
 const OFF = 'off';
+/** The `@stylistic` option "with no exception". */
+const ALWAYS = 'always';
 /** A name starting with `_` is unused on purpose. */
 const UNUSED_NAME = '^_';
 
@@ -32,6 +35,7 @@ const plugin = {
     'no-repeated-string': noRepeatedString,
     'dev-only-checks': devOnlyChecks,
     'specifier-newline': specifierNewline,
+    'jsx-child-curly-newline': jsxChildCurlyNewline,
   },
 };
 
@@ -130,7 +134,7 @@ const rules = {
   ],
   '@stylistic/semi': [
     ERROR,
-    'always',
+    ALWAYS,
   ],
   '@stylistic/quotes': [
     ERROR,
@@ -194,6 +198,38 @@ const rules = {
       max: 1,
     },
   ],
+  // coding.md §6.7, LAB D-034: JSX — every attribute on its own line, a single one included; the closing bracket on the
+  // line's indent, as `@stylistic/indent` puts it; every child on its own line, except one short child of an element
+  // without attributes (`<Local>{LEX_APP_TITLE}</Local>`); a multi-line child's braces on their own lines.
+  '@stylistic/jsx-max-props-per-line': [
+    ERROR,
+    {
+      maximum: 1,
+      when: ALWAYS,
+    },
+  ],
+  '@stylistic/jsx-first-prop-new-line': [
+    ERROR,
+    ALWAYS,
+  ],
+  '@stylistic/jsx-closing-bracket-location': [
+    ERROR,
+    'line-aligned',
+  ],
+  '@stylistic/jsx-one-expression-per-line': [
+    ERROR,
+    {
+      allow: 'single-child',
+    },
+  ],
+  '@stylistic/jsx-curly-newline': [
+    ERROR,
+    {
+      multiline: 'consistent',
+      singleline: 'forbid',
+    },
+  ],
+  'lab/jsx-child-curly-newline': ERROR,
 
   // coding.md §6.8: if / else / for / while — always with a block.
   curly: [

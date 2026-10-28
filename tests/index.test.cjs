@@ -4,17 +4,20 @@ const {
 } = require('child_process');
 const path = require('path');
 
-/** Lints `code` with the lab config in a separate Node process (see `lint.cjs`). */
+/** Lints `code` with the lab config in a separate Node process (see `lint.cjs`); with `fix`, `output` is the fixed code. */
 function lint(
-  code, options, filename,
+  code, options, filename, fix,
 ) {
   const args = [
     path.join(__dirname, 'lint.cjs'),
     code ?? '',
     options ? JSON.stringify(options) : '',
   ];
-  if (filename) {
-    args.push(filename);
+  if (filename || fix) {
+    args.push(filename || '');
+  }
+  if (fix) {
+    args.push('fix');
   }
   return JSON.parse(execFileSync(
     process.execPath, args, {
@@ -49,6 +52,7 @@ describe('eslint-config-lab', () => {
       'declare-before-loop',
       'dev-only-checks',
       'jsx-child-curly-newline',
+      'jsx-child-newline',
       'no-length-in-loop-condition',
       'no-repeated-comparison',
       'no-repeated-string',
@@ -94,11 +98,16 @@ describe('eslint-config-lab', () => {
     expect(lintTsx('export const a = (\n  <h1\n    className="f32"\n  >\n    {LEX_APP_TITLE()}\n  </h1>\n);\n')).toEqual([]);
     // an element without attributes keeps its one short child
     expect(lintTsx('export const a = <Local>{LEX_APP_TITLE}</Local>;\n')).toEqual([]);
-    // on one line only the first attribute is reported; the bracket and the child follow once `--fix` breaks the tag
-    expect(lintTsx('export const a = <h1 className="f32">{title}</h1>;\n')).toEqual(['@stylistic/jsx-first-prop-new-line']);
+    // an element with an attribute doesn't keep its child on the tag's line
+    expect(lintTsx('export const a = <h1 className="f32">{title}</h1>;\n')).toEqual([
+      '@stylistic/jsx-first-prop-new-line',
+      'lab/jsx-child-newline',
+      'lab/jsx-child-newline',
+    ]);
     expect(lintTsx('export const a = (\n  <h1\n    className="f32">{title}</h1>\n);\n')).toEqual([
       '@stylistic/jsx-closing-bracket-location',
-      '@stylistic/jsx-one-expression-per-line',
+      'lab/jsx-child-newline',
+      'lab/jsx-child-newline',
     ]);
     expect(lintTsx('export const a = (\n  <A\n    b={1} c={2}\n  />\n);\n')).toContain('@stylistic/jsx-max-props-per-line');
     expect(lintTsx('export const a = (\n  <div>\n    {on\n      ? a\n      : b}\n  </div>\n);\n')).toEqual([
@@ -109,6 +118,20 @@ describe('eslint-config-lab', () => {
       '@stylistic/jsx-curly-newline',
       '@stylistic/jsx-curly-newline',
     ]);
+  });
+
+  it('JSX: a line of text is one child, and `--fix` writes the owner\'s form (LAB D-034 point 4)', () => {
+    const TSX = {
+      files: ['**/*.tsx'],
+    };
+    const fix = (code) => lint(
+      code, TSX, 'a.tsx', true,
+    ).output;
+    expect(fix('export const a = (\n  <p className="mt14 f14 c--ink-3">Показано {visible.length} из {items.length}</p>\n);\n')).toBe('export const a = (\n  <p\n    className="mt14 f14 c--ink-3"\n  >\n    Показано {visible.length} из {items.length}\n  </p>\n);\n');
+    // children without text between them are lines of their own; an element inside the text stays in its line
+    expect(fix('export const a = (\n  <div>\n    <A /><B />\n    Нажмите <b>Далее</b>, чтобы продолжить\n  </div>\n);\n')).toBe('export const a = (\n  <div>\n    <A />\n    <B />\n    Нажмите <b>Далее</b>, чтобы продолжить\n  </div>\n);\n');
+    // nothing to fix: `{' '}` is never written
+    expect(fix('export const a = <b>Показано {count}</b>;\n')).toBe('export const a = <b>Показано {count}</b>;\n');
   });
 
   it('named exports only; a tool config may export a default (coding.md §6.7)', () => {
@@ -154,7 +177,7 @@ describe('eslint-config-lab', () => {
   });
 
   it('a string value 3+ times in a module: an error in code, not in tests (lab D-017.3)', () => {
-    const code = 'use(\'x\');\nuse(\'x\');\nuse(\'x\');\n';
+    const code = 'use(\'xy\');\nuse(\'xy\');\nuse(\'xy\');\n';
     expect(lint(
       code, TS, 'src/a.ts',
     ).ruleIds).toEqual(['lab/no-repeated-string']);

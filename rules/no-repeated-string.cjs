@@ -6,10 +6,7 @@ const {
 /** How many times a string may appear in a module before it must be a constant (coding.md §1; lab D-017). */
 const DEFAULT_THRESHOLD = 3;
 
-/**
- * The parent node types whose string is a name, not a value: module names, keys, types, JSX attributes. A JSX space
- * (`{' '}` among children) isn't one either — see `isValue`.
- */
+/** The parent node types whose string is a name, not a value: module names, keys, types, JSX attributes. */
 const NOT_VALUES = new Set([
   'ImportDeclaration',
   'ExportNamedDeclaration',
@@ -22,20 +19,18 @@ const NOT_VALUES = new Set([
   'JSXAttribute',
 ]);
 
-/** The parents whose `{ … }` is a child, not an attribute's value. */
-const JSX_PARENTS = new Set([
-  'JSXElement',
-  'JSXFragment',
-]);
+/**
+ * Whether a string is empty or one character (lab D-037): `' '`, `','`, `'/'` are punctuation, not values worth a
+ * name. One code point, so an emoji (two UTF-16 units) is one character too.
+ */
+function isAtMostOneCharacter(value) {
+  return value.length < 2 || value.length === 2 && value.codePointAt(0) > 0xffff;
+}
 
 /** Whether a string literal is a value of the code — not a name the language or a tool reads. */
 function isValue(node) {
   const parent = node.parent;
   if (!parent || NOT_VALUES.has(parent.type) || parent.type === 'ExpressionStatement' && parent.directive) {
-    return false;
-  }
-  // `{' '}` among JSX children — the space between a text and an expression on separate lines (lab D-034), layout
-  if (parent.type === 'JSXExpressionContainer' && JSX_PARENTS.has(parent.parent.type) && !node.value.trim()) {
     return false;
   }
   // `{ 'key': value }`, `obj['key']` — a name of a property
@@ -92,7 +87,7 @@ module.exports = {
     const seen = new Map();
 
     function note(node, value) {
-      if (value === '' || !isValue(node)) {
+      if (isAtMostOneCharacter(value) || !isValue(node)) {
         return;
       }
       const list = seen.get(value);

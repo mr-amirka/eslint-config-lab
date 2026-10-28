@@ -38,16 +38,17 @@ tester.run(
       "if (typeof a === 'string' || typeof b === 'string' || 'string' === typeof c) {}",
       // JSX attributes (classes — coding.md §17.6)
       'const v = <div><a className="dF" /><b className="dF" /><i className="dF" /></div>;',
-      // a JSX space among children (lab D-034) — in an element and a fragment
+      // one character (lab D-037): punctuation, a space, a line break, an emoji (one code point, two UTF-16 units)
+      "use(' '); use(' '); use(' '); use(','); use(','); use(',');",
+      "use('\\n'); use('\\n'); use('\\n'); use('😀'); use('😀'); use('😀');",
       "const v = <div>a{' '}<b />{' '}c{' '}<i /></div>;",
-      "const v = <>a{' '}<b />{' '}c{' '}<i /></>;",
       // directives, empty strings, tagged templates
       "'use strict'; use(''); use(''); use('');",
       'css`a`; css`a`; css`a`;',
       // a template with expressions is not a constant
       'use(`a${b}`); use(`a${b}`); use(`a${b}`);',
       {
-        code: "use('a'); use('a'); use('a');",
+        code: "use('ab'); use('ab'); use('ab');",
         options: [
           {
             threshold: 4,
@@ -57,9 +58,25 @@ tester.run(
     ],
     invalid: [
       {
-        // a space as an attribute's or a call's value is a value
-        code: "const v = <div>{use(' ')}{use(' ')}{use(' ')}</div>;",
+        // two characters count, whitespace and JSX included
+        code: "const v = <div>{'  '}<b />{'  '}<i />{'  '}</div>;",
         errors: [
+          {
+            messageId: 'repeated',
+            data: {
+              value: '"  "',
+              count: '3',
+            },
+          },
+        ],
+      },
+      {
+        // two emoji are two characters
+        code: "use('😀😀'); use('😀😀'); use(', '); use('😀😀'); use(', '); use(', ');",
+        errors: [
+          {
+            messageId: 'repeated',
+          },
           {
             messageId: 'repeated',
           },
@@ -97,7 +114,7 @@ tester.run(
         ],
       },
       {
-        code: "use('a'); use('a');",
+        code: "use('ab'); use('ab');",
         options: [
           {
             threshold: 2,

@@ -12,6 +12,7 @@ const noRepeatedString = require('./rules/no-repeated-string.cjs');
 const devOnlyChecks = require('./rules/dev-only-checks.cjs');
 const specifierNewline = require('./rules/specifier-newline.cjs');
 const jsxChildCurlyNewline = require('./rules/jsx-child-curly-newline.cjs');
+const jsxChildNewline = require('./rules/jsx-child-newline.cjs');
 
 /** The severities a rule is set to. */
 const ERROR = 'error';
@@ -36,6 +37,7 @@ const plugin = {
     'dev-only-checks': devOnlyChecks,
     'specifier-newline': specifierNewline,
     'jsx-child-curly-newline': jsxChildCurlyNewline,
+    'jsx-child-newline': jsxChildNewline,
   },
 };
 
@@ -199,8 +201,9 @@ const rules = {
     },
   ],
   // coding.md §6.7, LAB D-034: JSX — every attribute on its own line, a single one included; the closing bracket on the
-  // line's indent, as `@stylistic/indent` puts it; every child on its own line, except one short child of an element
-  // without attributes (`<Local>{LEX_APP_TITLE}</Local>`); a multi-line child's braces on their own lines.
+  // line's indent, as `@stylistic/indent` puts it; every child on its own line, a line of text being one child
+  // (`Показано {a} из {b}`, point 4), except one line of an element without attributes written on one line
+  // (`<Local>{LEX_APP_TITLE}</Local>`); a multi-line child's braces on their own lines.
   '@stylistic/jsx-max-props-per-line': [
     ERROR,
     {
@@ -216,12 +219,7 @@ const rules = {
     ERROR,
     'line-aligned',
   ],
-  '@stylistic/jsx-one-expression-per-line': [
-    ERROR,
-    {
-      allow: 'single-child',
-    },
-  ],
+  'lab/jsx-child-newline': ERROR,
   '@stylistic/jsx-curly-newline': [
     ERROR,
     {

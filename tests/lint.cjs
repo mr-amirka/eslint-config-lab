@@ -1,6 +1,7 @@
 'use strict';
 // Runs in its own Node process (Jest can't load the ES-module plugins the config requires): lints the code given in
-// argv with the lab config and prints the result as JSON. argv: code, options (JSON), filename.
+// argv with the lab config and prints the result as JSON. argv: code, options (JSON), filename, `fix` — the code as
+// `--fix` leaves it, in `output`.
 const {
   Linter,
 } = require('eslint');
@@ -10,6 +11,7 @@ const [
   code,
   optionsJson,
   filename,
+  fix,
 ] = process.argv.slice(2);
 const options = optionsJson ? JSON.parse(optionsJson) : undefined;
 let config;
@@ -24,15 +26,20 @@ try {
 const linter = new Linter({
   configType: 'flat',
 });
+const where = {
+  filename: filename || 'file.ts',
+};
 const messages = linter.verify(
-  code, config, {
-    filename: filename || 'file.ts',
-  },
+  code, config, where,
 );
+const output = fix ? linter.verifyAndFix(
+  code, config, where,
+).output : undefined;
 const [entry] = config;
 process.stdout.write(JSON.stringify({
   ruleIds: messages.map((message) => message.ruleId),
   messages: messages.map((message) => message.message),
+  output,
   entries: config.length,
   files: entry.files,
   globals: entry.languageOptions.globals,

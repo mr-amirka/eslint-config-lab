@@ -11,7 +11,8 @@ const tester = new RuleTester({
   },
 });
 
-const GUARD = "typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'";
+const GUARD = "process.env.NODE_ENV !== 'production'";
+const OLD_GUARD = "typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'";
 
 tester.run(
   'dev-only-checks', rule, {
@@ -32,6 +33,25 @@ tester.run(
       "import { other } from './other'; const x = other();",
     ],
     invalid: [
+      {
+        // `typeof process` stays in a development build and is false in a browser (lab D-051)
+        code: `function make(o) { if (${OLD_GUARD}) { OPTIONS().parse(o, 'make'); } }`,
+        output: `function make(o) { if (${GUARD}) { OPTIONS().parse(o, 'make'); } }`,
+        errors: [
+          {
+            messageId: 'typeofGuard',
+          },
+        ],
+      },
+      {
+        code: `function make(o) { ${OLD_GUARD} && OPTIONS().parse(o, 'make'); }`,
+        output: `function make(o) { ${GUARD} && OPTIONS().parse(o, 'make'); }`,
+        errors: [
+          {
+            messageId: 'typeofGuard',
+          },
+        ],
+      },
       {
         code: "function make(o) { OPTIONS().parse(o, 'make'); }",
         errors: [

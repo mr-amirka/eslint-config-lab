@@ -1,7 +1,10 @@
 'use strict';
-// The build mode as code reads it (lab D-023): `process.env.NODE_ENV`, which an app's bundler writes in as a literal,
-// and `typeof process`, the guard for a page with no bundler. A comparison of them is a fact of the build, not a value:
-// it can't be put into a variable (the bundler would no longer see it) and its strings are names, not data.
+// The build mode as code reads it (lab D-023): `process.env.NODE_ENV`, which an app's bundler writes in as a literal.
+// `typeof process` is recognised so that `lab/dev-only-checks` can report it in a guard (lab D-051: a bundler leaves
+// it in, and in a browser it is false). A comparison of them is a fact of the build, not a value: it can't be put into
+// a variable (the bundler would no longer see it) and its strings are names, not data.
+
+const BINARY = 'BinaryExpression';
 
 /** `process.env.NODE_ENV`. */
 function isNodeEnv(node) {
@@ -18,8 +21,14 @@ function isTypeofProcess(node) {
 
 /** A comparison of the build mode: `process.env.NODE_ENV !== 'production'`, `typeof process !== 'undefined'`. */
 function isBuildModeComparison(node) {
-  return node.type === 'BinaryExpression'
+  return node.type === BINARY
     && (isNodeEnv(node.left) || isNodeEnv(node.right) || isTypeofProcess(node.left) || isTypeofProcess(node.right));
+}
+
+/** `typeof process !== 'undefined'` (or `!=`), either way round. */
+function isTypeofProcessCheck(node) {
+  return !!node && node.type === BINARY && (node.operator === '!==' || node.operator === '!=')
+    && (isTypeofProcess(node.left) || isTypeofProcess(node.right));
 }
 
 /** Whether an expression reads `process.env.NODE_ENV` anywhere in it. */
@@ -30,7 +39,7 @@ function readsNodeEnv(node) {
   if (isNodeEnv(node)) {
     return true;
   }
-  if (node.type === 'LogicalExpression' || node.type === 'BinaryExpression') {
+  if (node.type === 'LogicalExpression' || node.type === BINARY) {
     return readsNodeEnv(node.left) || readsNodeEnv(node.right);
   }
   if (node.type === 'UnaryExpression') {
@@ -63,5 +72,7 @@ function inBuildModeBranch(node) {
 module.exports = {
   isNodeEnv,
   isBuildModeComparison,
+  isTypeofProcessCheck,
+  readsNodeEnv,
   inBuildModeBranch,
 };

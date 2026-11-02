@@ -1,6 +1,8 @@
 'use strict';
 const {
   inBuildModeBranch,
+  isTypeofProcessCheck,
+  readsNodeEnv,
 } = require('./build-mode.cjs');
 
 /** A module of option schemas: fundamentool's (`fundamentool/schema`, `../schema`) or a project's own `…/schema`. */
@@ -29,7 +31,8 @@ function atModuleLoad(node) {
  * runs only in development; a production build drops it, its schema and the schema library. Two mistakes undo that:
  * a check outside a `NODE_ENV` branch (it runs, and keeps the schema), and a schema built when the module loads (it
  * stays even when no check uses it). A check of data that arrives at run time is meant to stay — it says so with a
- * disable comment and the reason.
+ * disable comment and the reason. The guard reads `process.env.NODE_ENV` alone (lab D-051): `typeof process` stays in a
+ * development build, and in a browser it is false, so the check never ran there.
  *
  * @type {import('eslint').Rule.RuleModule}
  */
@@ -39,13 +42,16 @@ module.exports = {
     docs: {
       description: 'Checks of options run only in development; schemas are built on first use (lab D-023)',
     },
+    fixable: 'code',
     schema: [],
     messages: {
-      unguarded: 'A check of options runs only in development: put it behind `typeof process !== \'undefined\' && '
-        + 'process.env.NODE_ENV !== \'production\'` (lab D-023). A check of data that arrives at run time stays — say so: '
+      unguarded: 'A check of options runs only in development: put it behind `process.env.NODE_ENV !== \'production\'` '
+        + '(lab D-023). A check of data that arrives at run time stays — say so: '
         + '`// eslint-disable-next-line lab/dev-only-checks -- <the data it checks>`.',
       eager: 'A schema built when the module loads stays in a production build: build it on first use — '
         + '`/*#__PURE__*/ lazy(() => …)` (lab D-023).',
+      typeofGuard: 'Read `process.env.NODE_ENV` alone: a bundler leaves `typeof process` in, and in a browser it is false, '
+        + 'so the check never runs there, not even in development (lab D-051).',
     },
   },
   create(context) {
@@ -54,6 +60,16 @@ module.exports = {
     const schemaNames = new Set();
 
     return {
+      // `typeof process !== 'undefined' && process.env.NODE_ENV …` → `process.env.NODE_ENV …`
+      LogicalExpression(node) {
+        if (node.operator === '&&' && isTypeofProcessCheck(node.left) && readsNodeEnv(node.right)) {
+          context.report({
+            node: node.left,
+            messageId: 'typeofGuard',
+            fix: (fixer) => fixer.replaceText(node, sourceCode.getText(node.right)),
+          });
+        }
+      },
       ImportDeclaration(node) {
         if (!SCHEMA_MODULE.test(node.source.value)) {
           return;

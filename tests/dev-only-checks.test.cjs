@@ -26,6 +26,12 @@ tester.run(
       // not a check of options: JSON, a one-argument parse (a parser, zod's parse)
       'const value = JSON.parse(text, reviver);',
       'const rows = format.parse(text);',
+      // not a check of options: a parser given a file — its second argument is no "where"
+      'function read(kind, source, file) { return kind.parse(source, file); }',
+      'function read(kind, source, ctx) { return kind.parse(source, ctx.file); }',
+      'function read(kind, source) { return kind.parse(source, { strict: true }); }',
+      'function read(kind, source) { return kind.parse(source, 2); }',
+      'function read(p, source) { return p[\'parse\'](source, \'x\'); }',
       // a schema built on first use; a schema built inside a function
       "import { lazy, object, string } from 'fundamentool/schema'; const OPTIONS = /*#__PURE__*/ lazy(() => object({ name: string() }));",
       "import { object } from '../schema'; function options() { return object({}); }",
@@ -60,6 +66,22 @@ tester.run(
           },
         ],
       },
+      ...[
+        'WHERE',
+        'MN_WHERE + \'compile\'',
+        '`${WHERE} createIndex`',
+        'where',
+        'options.where',
+        '\'[app] \' + name',
+        'name + \' options\'',
+      ].map((where) => ({
+        code: `function make(o) { OPTIONS().parse(o, ${where}); }`,
+        errors: [
+          {
+            messageId: 'unguarded',
+          },
+        ],
+      })),
       {
         code: "function make(o) { assertKnownOptions(o, KEYS, 'make'); }",
         errors: [

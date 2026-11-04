@@ -16,6 +16,31 @@ const FUNCTIONS = new Set([
   'ArrowFunctionExpression',
 ]);
 
+/** A name that holds the caller's place in a message: `WHERE`, `where`, `MN_WHERE`, `WHERE_LOCALE`. */
+const WHERE_NAME = /where/i;
+
+/**
+ * Whether an argument is a "where" — the text a schema's `parse(value, where)` puts before its message: a string, a
+ * template, a `+` of them, or a name (or a property) holding `where`. A parser's own second argument (`parse(source,
+ * file)`) is none of these, so `kind.parse(source, file)` is not read as a check of options.
+ */
+function isWhere(node) {
+  switch (node.type) {
+    case 'Literal':
+      return typeof node.value === 'string';
+    case 'TemplateLiteral':
+      return true;
+    case 'BinaryExpression':
+      return node.operator === '+' && (isWhere(node.left) || isWhere(node.right));
+    case IDENTIFIER:
+      return WHERE_NAME.test(node.name);
+    case 'MemberExpression':
+      return !node.computed && WHERE_NAME.test(node.property.name);
+    default:
+      return false;
+  }
+}
+
 /** Whether `node` runs when the module loads — not inside a function. */
 function atModuleLoad(node) {
   for (let parent = node.parent; parent; parent = parent.parent) {
@@ -81,9 +106,10 @@ module.exports = {
       CallExpression(node) {
         const callee = node.callee;
         const named = callee.type === IDENTIFIER;
-        // `schema.parse(value, where)` (not JSON.parse) and `assertKnownOptions(…)`: checks of options
+        // `schema.parse(value, where)` (not JSON.parse; its second argument a "where") and `assertKnownOptions(…)`
         const isCheck = (callee.type === 'MemberExpression' && !callee.computed && callee.property.name === 'parse'
-          && node.arguments.length === 2 && !(callee.object.type === IDENTIFIER && callee.object.name === 'JSON'))
+          && node.arguments.length === 2 && isWhere(node.arguments[1])
+          && !(callee.object.type === IDENTIFIER && callee.object.name === 'JSON'))
           || (named && callee.name === 'assertKnownOptions');
         if (isCheck && !inBuildModeBranch(node)) {
           context.report({

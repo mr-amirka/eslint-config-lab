@@ -35,6 +35,15 @@ tester.run(
       "function make() { if (typeof load().options !== 'object') { throw new Error('load'); } }",
       // another function's call
       'nearestKnown(key, known);',
+      // a list that isn't an option, a helper whose name isn't for failing
+      "function read(rows) { if (!Array.isArray(rows.items)) { throw new Error('rows'); } }",
+      "function make(options) { if (!Array.isArray(options.list)) { warn('list'); } }",
+      "function make(options) { if (Array.isArray(options.list, 1)) { throw new Error('list'); } }",
+      "function make(options) { if (Object.isArray(options.list)) { throw new Error('list'); } }",
+      "function make(options) { if (isArray(options.list)) { throw new Error('list'); } }",
+      "function make(options) { if (Array[name](options.list)) { throw new Error('list'); } }",
+      "function make(options) { if (typeof options.a !== 'string') { helpers.fail('a'); } }",
+      "function make(options) { if (typeof options.a !== 'string') { (fail)('a'), 1; } }",
     ],
     invalid: [
       {
@@ -52,6 +61,19 @@ tester.run(
       },
       {
         code: "function make(opts) { if (!(typeof opts.waitMs === 'number')) { log(); throw new TypeError('waitMs'); } }",
+        errors: BY_HAND,
+      },
+      {
+        // optional chaining, a helper that fails (research 39: host.kind)
+        code: "function kind(name, options) { if (typeof options?.parse !== 'function') { fail('noParser', { name }); } }",
+        errors: BY_HAND,
+      },
+      {
+        code: "function scope(options) { if (!Array.isArray(options.ignore)) throwBad('ignore'); }",
+        errors: BY_HAND,
+      },
+      {
+        code: "function make(config) { if (!Array.isArray(config?.list)) { raise('list'); } }",
         errors: BY_HAND,
       },
     ],

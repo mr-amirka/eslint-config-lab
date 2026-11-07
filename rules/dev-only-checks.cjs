@@ -106,11 +106,10 @@ module.exports = {
       CallExpression(node) {
         const callee = node.callee;
         const named = callee.type === IDENTIFIER;
-        // `schema.parse(value, where)` (not JSON.parse; its second argument a "where") and `assertKnownOptions(…)`
+        // `schema.parse(value, where)` (not JSON.parse; its second argument a "where")
         const isCheck = (callee.type === 'MemberExpression' && !callee.computed && callee.property.name === 'parse'
           && node.arguments.length === 2 && isWhere(node.arguments[1])
-          && !(callee.object.type === IDENTIFIER && callee.object.name === 'JSON'))
-          || (named && callee.name === 'assertKnownOptions');
+          && !(callee.object.type === IDENTIFIER && callee.object.name === 'JSON'));
         if (isCheck && !inBuildModeBranch(node)) {
           context.report({
             node,

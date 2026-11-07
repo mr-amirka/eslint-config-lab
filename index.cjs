@@ -10,6 +10,7 @@ const noLengthInLoopCondition = require('./rules/no-length-in-loop-condition.cjs
 const noRepeatedComparison = require('./rules/no-repeated-comparison.cjs');
 const noRepeatedString = require('./rules/no-repeated-string.cjs');
 const devOnlyChecks = require('./rules/dev-only-checks.cjs');
+const optionsThroughSchema = require('./rules/options-through-schema.cjs');
 const specifierNewline = require('./rules/specifier-newline.cjs');
 const jsxChildCurlyNewline = require('./rules/jsx-child-curly-newline.cjs');
 const jsxChildNewline = require('./rules/jsx-child-newline.cjs');
@@ -35,6 +36,7 @@ const plugin = {
     'no-repeated-comparison': noRepeatedComparison,
     'no-repeated-string': noRepeatedString,
     'dev-only-checks': devOnlyChecks,
+    'options-through-schema': optionsThroughSchema,
     'specifier-newline': specifierNewline,
     'jsx-child-curly-newline': jsxChildCurlyNewline,
     'jsx-child-newline': jsxChildNewline,
@@ -249,6 +251,8 @@ const rules = {
   'lab/no-repeated-string': ERROR,
   // api-input-validation.md: a check of options runs only in development; a schema is built on first use (lab D-023)
   'lab/dev-only-checks': ERROR,
+  // api-input-validation.md: an options object is checked through fundamentool/schema, never by hand (lab D-073)
+  'lab/options-through-schema': ERROR,
 };
 
 /** React's hook rules (`react: true`): a class of mistakes neither tsc nor a build catches. Errors, not warnings (LAB D-012). */
@@ -400,6 +404,7 @@ function lab(options = {}) {
         'lab/no-repeated-string': OFF,
         // A test checks options and builds schemas as it needs
         'lab/dev-only-checks': OFF,
+        'lab/options-through-schema': OFF,
       },
     },
     {

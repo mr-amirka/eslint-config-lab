@@ -22,7 +22,6 @@ tester.run(
       'function make(o) { if (process.env.NODE_ENV !== \'production\') OPTIONS().parse(o, \'make\'); }',
       `function make(o) { ${GUARD} && OPTIONS().parse(o, 'make'); }`,
       `function make(o) { return ${GUARD} ? OPTIONS().parse(o, 'make') : o; }`,
-      `function make(o) { if (${GUARD}) { assertKnownOptions(o, KEYS, 'make'); } }`,
       // not a check of options: JSON, a one-argument parse (a parser, zod's parse)
       'const value = JSON.parse(text, reviver);',
       'const rows = format.parse(text);',
@@ -82,14 +81,6 @@ tester.run(
           },
         ],
       })),
-      {
-        code: "function make(o) { assertKnownOptions(o, KEYS, 'make'); }",
-        errors: [
-          {
-            messageId: 'unguarded',
-          },
-        ],
-      },
       {
         // the else branch runs in production
         code: `function make(o) { if (${GUARD}) { log(); } else { OPTIONS().parse(o, 'make'); } }`,

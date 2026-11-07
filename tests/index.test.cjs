@@ -56,6 +56,7 @@ describe('eslint-config-lab', () => {
       'no-length-in-loop-condition',
       'no-repeated-comparison',
       'no-repeated-string',
+      'options-through-schema',
       'specifier-newline',
     ]);
     expect(result.sameRules).toBe(true);
